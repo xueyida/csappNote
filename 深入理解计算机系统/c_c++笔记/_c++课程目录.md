@@ -298,3 +298,321 @@ int main(){
 
 
 
+
+
+### 命名空间
+
+解决的问题- 名字冲突
+
+使用方式：
+
+```c++
+
+   
+    namespace Test{
+        int  a=1;
+    }
+
+     // 第一种方式
+    int main(){
+        {
+            using namespace Test;
+            a=2;
+        }
+        return 0;
+    }
+
+
+    // 第二张方式
+    Test::a = 2;
+
+    // 第三种方式
+    using Test::a;
+    a=2
+
+
+```
+
+知识点：
+
+1. namespace可以拆分
+
+2. 取别名
+
+```c++
+
+    // 1
+    namespace Test {
+        int a=2;
+    }
+
+    namespace Test {
+        int b=3;
+    }
+
+    // 2
+
+    namespace Test1=Test;
+
+```
+
+### 函数重载
+
+- 构成重载的条件：
+
+0. 作用域需要相同
+1. 参数（参数类型，参数数量，参数顺序）不同
+2. 函数名相同
+3. 调用约定不考虑
+4. 返回值类型不考虑
+
+```c++
+
+    int Add(int n1, int n2){
+        return n1+n1;
+    }
+
+    float Add(float n1, float n2){
+        return n1+n2;
+    }
+
+    float Add(float n1, float n2, float n3){
+        return n1+n2+n3;
+    }
+
+    // 调用约定
+
+    int __stdcall Add(int n)
+    {
+        return 0;
+    }
+
+    int __cdecl Add(int n){
+        return 0;
+    }
+
+```
+
+
+- 函数重载原理：名称粉碎
+
+
+    1. extern "C" // 告诉函数名称粉碎规则使用c，而不是c++
+
+    2. 使用extern "C" 无法使用函数重载
+
+
+- 重载使用过程中，需要注意参数的完美匹配
+
+- 默认参对函数的调用也是有影响
+
+
+### 内联
+
+短函数： 体积小  效率低  方便调试 
+
+宏：    体积大   效率高  不方便调试（在每个地方使用的地方都会展开）
+
+
+
+提出内联：
+
+    内联的作用： 
+
+
+
+    既可以像函数一样调试，也可以在调用点像宏一样展开
+
+    debug版任何函数都不会展开；
+
+    内联相关的编译选项：
+        ob0:所有的函数都不内联
+        ob1：有依赖的内联
+        ob2：所有都尝试内联
+    
+
+    建议编译器内联，但是能不能内联成功，看编译器
+
+    内联函数声明与实现不能拆开，建议内联函数定义与实现都放在头文件中
+
+    内联函数被编译器变成文件作用域；包含内联函数的头文件， 被多个cpp调用，然后实现，不会出现重定义的问题
+
+
+
+### 类
+
+
+1. 面向对象编程（提高代码的复用）
+
+    封装，继承，多态
+
+2. class与struct的区别
+
+    - class默认属性是公有的，struct是私有的
+
+    - struct没有public,private等
+
+3. 内存结构
+    - class 与 struct的内存布局是一样的
+
+    - class访问权限控制是语法限制
+
+    - cTest没有成员变量，使用一个字节占位
+
+4. 成员函数指针
+
+    ```c++
+
+        typedef void(* PFN_SETX)(int nX);
+
+        PFN_SETX pfnSetX = &CPlayer::Setx;  // 不能给到pfnSetX
+        
+        void *p = &CPlayer::Setx;  // 报错
+
+
+
+
+        typedef void(CPlayer::* PFN_SETX)(int nX);
+
+        PFN_SETX pfnSetX = &CPlayer::Setx;  // 正确
+
+
+        player.*pfnSetX(9)  //成员函数变量指针调用，使用类对象
+
+        CPlayer* p = &player;
+
+        (p->*pfnSetX)(99);
+
+
+
+    
+    ```
+
+
+
+5. 声明和定义分开
+
+    声明写到头文件
+    实现写到cpp文件
+
+    属性写在声明的部分，函数写在声明的下部分；先公有，再私有
+
+    public: 函数
+
+
+    private： 函数
+
+    public: 属性
+
+
+    private： 
+
+
+
+
+6. __thiscall
+    调用传参约定
+
+    类成员函数通过ecx传入this指针的调用约定叫做__thiscall
+
+    调用约定可以改；
+
+
+
+
+7. 类对象的共享问题
+
+    类对象的成员属性是单独的
+
+    类对象的成员函数是同一份，通过this确定哪个对象调用
+
+
+
+
+
+
+### 构造和析构
+
+解决问题：class的初始化
+
+构造：函数名和类名形同；无返回值；可以重载；
+析构：函数名和类名形同，前面加~；无返回值；不可以重载；没有参数
+
+
+javascript也有构造函数，没有析构
+
+构造和析构的调用世纪：
+    在对象的生命周期开始时，调用构造，在对象的生命周期结束时，调用析构
+
+### new delete
+
+new 申请堆内存，并调用构造
+delete 调用析构，并释放堆
+
+解决问题：
+
+    堆上分配的数据,不能自动调用构造 
+
+使用方式：
+
+    数组：
+        CFoo *paryF = new CFoo[5]{{},{},{},{},{}} 
+        delete[] paryF;
+
+29分钟开始不常用：
+
+    ```c++
+
+        class CFoo2
+        {
+            CFoo2(){
+
+            }
+            int m_n;
+        }
+
+        int *pInt = new CFoo2[6];
+
+    ```
+
+    没有析构函数，对内存不会分配内存数的位置
+
+
+
+
+### 拷贝构造
+
+解决问题：参数传对象，会有重复释放的问题
+
+struct传参时，会把内存复制过去
+
+拷贝构造的使用场景：
+
+1. 对象传参
+
+```c++
+
+    class CDataBuff{
+
+    }
+
+    void Foo(CDataBuff buf)
+    {
+        cout <<buf.GetData()<<endl;
+    }
+
+    int main(){
+        CDataBuff buf0((char*)"hello", 6);
+        Foo(buf0);
+        return 0;
+    }
+
+```
+
+
+### 构造自己的string
+
+
+
+
+
